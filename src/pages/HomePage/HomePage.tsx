@@ -5,8 +5,13 @@ import { TaskList } from '@/widgets/TaskList/TaskList';
 import { TaskForm } from '@/features/task-management';
 import { Task, TaskCategory, TaskStatus, User } from '@/shared/types';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { tasksApi, statsApi } from '@/shared/api';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Plus, Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { isToday } from '@/shared/lib/dateUtils';
 
-// Mock user data
+// Mock user data (TODO: Replace with actual user data from API)
 const mockUser: User = {
   id: '1',
   email: 'user@example.com',
@@ -16,107 +21,73 @@ const mockUser: User = {
   createdAt: new Date()
 };
 
-// Mock initial tasks data
-const createMockTasks = (): Task[] => {
-  const now = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(now.getDate() + 1);
-  const nextWeek = new Date();
-  nextWeek.setDate(now.getDate() + 7);
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
-
-  return [
-    {
-      id: '1',
-      title: '프로젝트 기획서 작성',
-      description: '새로운 웹 애플리케이션 프로젝트를 위한 기획서를 작성합니다.',
-      category: TaskCategory.WORK,
-      status: TaskStatus.IN_PROGRESS,
-      dueDate: now,
-      createdAt: yesterday,
-      updatedAt: now,
-      userId: '1',
-      estimatedMinutes: 120,
-      difficulty: 3
-    },
-    {
-      id: '2',
-      title: 'React 강의 수강',
-      description: 'React 고급 기능에 대한 온라인 강의를 수강합니다.',
-      category: TaskCategory.STUDY,
-      status: TaskStatus.PENDING,
-      dueDate: tomorrow,
-      createdAt: yesterday,
-      updatedAt: now,
-      userId: '1',
-      estimatedMinutes: 90,
-      difficulty: 2
-    },
-    {
-      id: '3',
-      title: '헬스장 운동',
-      description: '주 3회 헬스장에서 웨이트 트레이닝을 합니다.',
-      category: TaskCategory.EXERCISE,
-      status: TaskStatus.COMPLETED,
-      dueDate: yesterday,
-      createdAt: new Date(Date.now() - 86400000 * 2),
-      updatedAt: yesterday,
-      userId: '1',
-      estimatedMinutes: 60,
-      difficulty: 2
-    },
-    {
-      id: '4',
-      title: '독서: 클린 코드',
-      description: '로버트 마틴의 클린 코드 책을 읽고 정리합니다.',
-      category: TaskCategory.HOBBY,
-      status: TaskStatus.PENDING,
-      dueDate: nextWeek,
-      createdAt: yesterday,
-      updatedAt: now,
-      userId: '1',
-      estimatedMinutes: 180,
-      difficulty: 3
-    },
-    {
-      id: '5',
-      title: '병원 예약',
-      description: '정기 건강검진 예약을 잡습니다.',
-      category: TaskCategory.OTHER,
-      status: TaskStatus.PENDING,
-      dueDate: new Date(Date.now() + 86400000 * 3),
-      createdAt: now,
-      updatedAt: now,
-      userId: '1',
-      estimatedMinutes: 30,
-      difficulty: 1
-    }
-  ];
-};
-
 export function HomePage() {
-  const { theme, setTheme } = useTheme();
-  const [tasks, setTasks] = useState<Task[]>(createMockTasks());
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-
-  // Calculate stats
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.status === TaskStatus.COMPLETED).length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const todayTasks = tasks.filter(task => {
-    const today = new Date();
-    const taskDate = new Date(task.dueDate);
-    return (
-      taskDate.getDate() === today.getDate() &&
-      taskDate.getMonth() === today.getMonth() &&
-      taskDate.getFullYear() === today.getFullYear()
-    );
-  }).length;
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Mock streak calculation (would come from backend in real app)
-  const streak = 5;
+  // Stats state
+  const [dashboardStats, setDashboardStats] = useState({
+    totalTasks: 0,
+    completedTasks: 0,
+    completionRate: 0,
+    currentStreak: 0,
+    todayTasks: 0
+  });
+
+  const { theme, setTheme } = useTheme();
+
+  // Load tasks and stats from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Load tasks and stats in parallel
+        const [tasksResponse, statsResponse] = await Promise.all([
+          tasksApi.getTasks(),
+          statsApi.getDashboardStats()
+        ]);
+
+        if (tasksResponse.success) {
+          // Convert date strings back to Date objects
+          const tasksWithDates = tasksResponse.data.tasks.map(task => ({
+            ...task,
+            dueDate: new Date(task.dueDate),
+            createdAt: new Date(task.createdAt),
+            updatedAt: new Date(task.updatedAt)
+          }));
+          setTasks(tasksWithDates);
+        }
+
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        }
+      } catch (err) {
+        setError('데이터를 불러오는데 실패했습니다.');
+        console.error('Failed to load data:', err);
+        
+        // Fallback to empty data
+        setTasks([]);
+        setDashboardStats({
+          totalTasks: 0,
+          completedTasks: 0,
+          completionRate: 0,
+          currentStreak: 0,
+          todayTasks: 0
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const handleAddTask = () => {
     setEditingTask(undefined);
@@ -128,120 +99,247 @@ export function HomePage() {
     setIsTaskFormOpen(true);
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId));
-  };
-
-  const handleCompleteTask = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status: TaskStatus.COMPLETED, updatedAt: new Date() }
-        : task
-    ));
-  };
-
-  const handleStatusChange = (taskId: string, status: TaskStatus) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status, updatedAt: new Date() }
-        : task
-    ));
-  };
-
-  const handleTaskFormSubmit = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
-    const now = new Date();
-    
-    if (editingTask) {
-      // Update existing task
-      setTasks(prev => prev.map(task => 
-        task.id === editingTask.id 
-          ? {
-              ...task,
-              ...taskData,
-              updatedAt: now
-            }
-          : task
-      ));
-    } else {
-      // Create new task
-      const newTask: Task = {
-        id: Date.now().toString(),
-        ...taskData,
-        createdAt: now,
-        updatedAt: now,
-        userId: mockUser.id
-      };
-      setTasks(prev => [newTask, ...prev]);
+  const handleTaskSubmit = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
+    try {
+      if (editingTask) {
+        // Update existing task
+        const response = await tasksApi.updateTask(editingTask.id, taskData);
+        if (response.success) {
+          setTasks(prev => prev.map(task => 
+            task.id === editingTask.id 
+              ? { 
+                  ...response.data, 
+                  dueDate: new Date(response.data.dueDate),
+                  createdAt: new Date(response.data.createdAt),
+                  updatedAt: new Date(response.data.updatedAt)
+                }
+              : task
+          ));
+        }
+      } else {
+        // Create new task
+        const response = await tasksApi.createTask(taskData);
+        if (response.success) {
+          const newTask = {
+            ...response.data,
+            dueDate: new Date(response.data.dueDate),
+            createdAt: new Date(response.data.createdAt),
+            updatedAt: new Date(response.data.updatedAt)
+          };
+          setTasks(prev => [newTask, ...prev]);
+        }
+      }
+      setIsTaskFormOpen(false);
+      setEditingTask(undefined);
+      
+      // Refresh stats after task changes
+      const statsResponse = await statsApi.getDashboardStats();
+      if (statsResponse.success) {
+        setDashboardStats(statsResponse.data);
+      }
+    } catch (err) {
+      console.error('Failed to save task:', err);
     }
-
-    setIsTaskFormOpen(false);
-    setEditingTask(undefined);
   };
 
-  const handleTaskFormCancel = () => {
+  const handleCompleteTask = async (taskId: string) => {
+    try {
+      const response = await tasksApi.updateTaskStatus(taskId, TaskStatus.COMPLETED);
+      if (response.success) {
+        setTasks(prev => prev.map(task =>
+          task.id === taskId
+            ? { 
+                ...response.data,
+                dueDate: new Date(response.data.dueDate),
+                createdAt: new Date(response.data.createdAt),
+                updatedAt: new Date(response.data.updatedAt)
+              }
+            : task
+        ));
+        
+        // Refresh stats
+        const statsResponse = await statsApi.getDashboardStats();
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to complete task:', err);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const response = await tasksApi.deleteTask(taskId);
+      if (response.success) {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+        
+        // Refresh stats
+        const statsResponse = await statsApi.getDashboardStats();
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+    }
+  };
+
+  const handleStatusChange = async (taskId: string, status: TaskStatus) => {
+    try {
+      const response = await tasksApi.updateTaskStatus(taskId, status);
+      if (response.success) {
+        setTasks(prev => prev.map(task =>
+          task.id === taskId
+            ? { 
+                ...response.data,
+                dueDate: new Date(response.data.dueDate),
+                createdAt: new Date(response.data.createdAt),
+                updatedAt: new Date(response.data.updatedAt)
+              }
+            : task
+        ));
+        
+        // Refresh stats
+        const statsResponse = await statsApi.getDashboardStats();
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+    }
+  };
+
+  const handleCloseTaskForm = () => {
     setIsTaskFormOpen(false);
     setEditingTask(undefined);
   };
 
   const handleToggleDarkMode = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(isDarkMode ? 'light' : 'dark');
   };
 
-  const handleNotificationsClick = () => {
-    // Mock notification handler
-    console.log('Notifications clicked');
-  };
-
-  const handleProfileClick = () => {
-    // Mock profile handler
-    console.log('Profile clicked');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <Header
         user={mockUser}
         notificationCount={3}
         onAddTask={handleAddTask}
-        onProfileClick={handleProfileClick}
-        onNotificationsClick={handleNotificationsClick}
-        darkMode={theme === 'dark'}
+        onProfileClick={() => console.log('Profile clicked')}
+        onNotificationsClick={() => console.log('Notifications clicked')}
+        darkMode={isDarkMode}
         onToggleDarkMode={handleToggleDarkMode}
       />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Stats Cards */}
-        <section>
-          <StatsCard
-            completionRate={completionRate}
-            totalTasks={totalTasks}
-            completedTasks={completedTasks}
-            streak={streak}
-            todayTasks={todayTasks}
-          />
-        </section>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-2 rounded-md">
+            {error}
+          </div>
+        )}
+
+        {/* Welcome Section */}
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-2xl font-bold">안녕하세요, {mockUser.name}님! 👋</h1>
+            <p className="text-muted-foreground">오늘 완료할 과제: {dashboardStats.todayTasks}개</p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleAddTask}>
+              <Plus className="h-4 w-4 mr-2" />
+              새 과제 추가
+            </Button>
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              캘린더 보기
+            </Button>
+            <Button variant="outline">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              완료된 과제
+            </Button>
+          </div>
+        </div>
+
+        {/* Statistics */}
+        <StatsCard
+          completionRate={dashboardStats.completionRate}
+          totalTasks={dashboardStats.totalTasks}
+          completedTasks={dashboardStats.completedTasks}
+          streak={dashboardStats.currentStreak}
+          todayTasks={dashboardStats.todayTasks}
+        />
+
+        {/* Today's Schedule Preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="h-5 w-5" />
+              <span>오늘의 일정</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {tasks.filter(task => isToday(task.dueDate) && task.status !== TaskStatus.COMPLETED).length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                오늘 예정된 과제가 없습니다. 새로운 과제를 추가해보세요!
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {tasks
+                  .filter(task => isToday(task.dueDate) && task.status !== TaskStatus.COMPLETED)
+                  .slice(0, 3)
+                  .map(task => (
+                    <div key={task.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <div>
+                          <p className="font-medium">{task.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {task.estimatedMinutes}분 소요
+                          </p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline">
+                        시작
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Task List */}
-        <section>
-          <TaskList
-            tasks={tasks}
-            onCompleteTask={handleCompleteTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            onStatusChange={handleStatusChange}
-          />
-        </section>
-      </main>
+        <TaskList
+          tasks={tasks}
+          onCompleteTask={handleCompleteTask}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTask}
+          onStatusChange={handleStatusChange}
+        />
 
-      {/* Task Form Modal */}
-      <TaskForm
-        task={editingTask}
-        onSubmit={handleTaskFormSubmit}
-        onCancel={handleTaskFormCancel}
-        isOpen={isTaskFormOpen}
-      />
+        {/* Task Form Modal */}
+        <TaskForm
+          task={editingTask}
+          onSubmit={handleTaskSubmit}
+          onCancel={handleCloseTaskForm}
+          isOpen={isTaskFormOpen}
+        />
+      </main>
     </div>
   );
 }
