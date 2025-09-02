@@ -125,13 +125,13 @@ export function TaskList({
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 ({taskCounts.all})</SelectItem>
-                <SelectItem value="today">오늘 ({taskCounts.today})</SelectItem>
-                <SelectItem value="tomorrow">내일 ({taskCounts.tomorrow})</SelectItem>
-                <SelectItem value="overdue">지연됨 ({taskCounts.overdue})</SelectItem>
-                <SelectItem value="pending">대기중 ({taskCounts.pending})</SelectItem>
-                <SelectItem value="completed">완료됨 ({taskCounts.completed})</SelectItem>
+              <SelectContent className="bg-white border-gray-200 shadow-lg">
+                <SelectItem value="all" className="hover:bg-primary/5 focus:bg-primary/10">전체 ({taskCounts.all})</SelectItem>
+                <SelectItem value="today" className="hover:bg-primary/5 focus:bg-primary/10">오늘 ({taskCounts.today})</SelectItem>
+                <SelectItem value="tomorrow" className="hover:bg-primary/5 focus:bg-primary/10">내일 ({taskCounts.tomorrow})</SelectItem>
+                <SelectItem value="overdue" className="hover:bg-primary/5 focus:bg-primary/10">지연됨 ({taskCounts.overdue})</SelectItem>
+                <SelectItem value="pending" className="hover:bg-primary/5 focus:bg-primary/10">대기중 ({taskCounts.pending})</SelectItem>
+                <SelectItem value="completed" className="hover:bg-primary/5 focus:bg-primary/10">완료됨 ({taskCounts.completed})</SelectItem>
               </SelectContent>
             </Select>
 
@@ -139,13 +139,13 @@ export function TaskList({
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">모든 카테고리</SelectItem>
-                <SelectItem value={TaskCategory.WORK}>업무</SelectItem>
-                <SelectItem value={TaskCategory.STUDY}>학습</SelectItem>
-                <SelectItem value={TaskCategory.EXERCISE}>운동</SelectItem>
-                <SelectItem value={TaskCategory.HOBBY}>취미</SelectItem>
-                <SelectItem value={TaskCategory.OTHER}>기타</SelectItem>
+              <SelectContent className="bg-white border-gray-200 shadow-lg">
+                <SelectItem value="all" className="hover:bg-primary/5 focus:bg-primary/10">모든 카테고리</SelectItem>
+                <SelectItem value={TaskCategory.WORK} className="hover:bg-primary/5 focus:bg-primary/10">업무</SelectItem>
+                <SelectItem value={TaskCategory.STUDY} className="hover:bg-primary/5 focus:bg-primary/10">학습</SelectItem>
+                <SelectItem value={TaskCategory.EXERCISE} className="hover:bg-primary/5 focus:bg-primary/10">운동</SelectItem>
+                <SelectItem value={TaskCategory.HOBBY} className="hover:bg-primary/5 focus:bg-primary/10">취미</SelectItem>
+                <SelectItem value={TaskCategory.OTHER} className="hover:bg-primary/5 focus:bg-primary/10">기타</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -260,15 +260,15 @@ export function HomePage() {
 
           {/* Quick Actions */}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleAddTask}>
+            <Button onClick={handleAddTask} className="bg-primary hover:bg-primary/90 focus:bg-primary/90 focus:ring-primary/30 shadow-sm">
               <Plus className="h-4 w-4 mr-2" />
               새 과제 추가
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="bg-white border-gray-300 hover:bg-primary/5 hover:border-primary focus:border-primary focus:ring-primary/20">
               <Calendar className="h-4 w-4 mr-2" />
               캘린더 보기
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="bg-white border-gray-300 hover:bg-primary/5 hover:border-primary focus:border-primary focus:ring-primary/20">
               <CheckCircle2 className="h-4 w-4 mr-2" />
               완료된 과제
             </Button>
@@ -313,7 +313,7 @@ export function HomePage() {
                           </p>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="bg-white border-gray-300 hover:bg-primary/5 hover:border-primary focus:border-primary focus:ring-primary/20">
                         시작
                       </Button>
                     </div>
