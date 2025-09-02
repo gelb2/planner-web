@@ -100,10 +100,10 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>{task ? '과제 수정' : '새 과제 추가'}</CardTitle>
+    <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
+      <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white shadow-2xl border-2 border-gray-100">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-primary/5 to-primary/10 border-b border-gray-100">
+          <CardTitle className="text-primary font-semibold">{task ? '과제 수정' : '새 과제 추가'}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onCancel}>
             <X className="h-4 w-4" />
           </Button>
@@ -119,6 +119,7 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="과제 제목을 입력하세요"
+                className="bg-white border-gray-200 focus:border-primary focus:ring-primary/20"
                 required
               />
             </div>
@@ -131,6 +132,7 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="과제에 대한 자세한 설명을 입력하세요"
+                className="bg-white border-gray-200 focus:border-primary focus:ring-primary/20"
                 rows={3}
               />
             </div>
@@ -142,12 +144,12 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                 value={formData.category}
                 onValueChange={(value) => handleInputChange('category', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-200 hover:border-primary focus:border-primary focus:ring-primary/20">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200 shadow-lg">
                   {categoryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="hover:bg-primary/5 focus:bg-primary/10">
                       {option.label}
                     </SelectItem>
                   ))}
@@ -162,13 +164,13 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    className="w-full justify-start text-left font-normal bg-white border-gray-200 hover:bg-primary/5 hover:border-primary focus:border-primary focus:ring-primary/20"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formatLongDate(formData.dueDate)}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-white border-gray-200 shadow-xl" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.dueDate}
@@ -191,12 +193,12 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                 value={formData.estimatedMinutes.toString()}
                 onValueChange={(value) => handleInputChange('estimatedMinutes', parseInt(value))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-200 hover:border-primary focus:border-primary focus:ring-primary/20">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200 shadow-lg">
                   {estimatedTimeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value.toString()}>
+                    <SelectItem key={option.value} value={option.value.toString()} className="hover:bg-primary/5 focus:bg-primary/10">
                       {option.label}
                     </SelectItem>
                   ))}
@@ -211,6 +213,7 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                   id="notification"
                   checked={formData.notificationEnabled}
                   onCheckedChange={(checked) => handleInputChange('notificationEnabled', checked)}
+                  className="border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <Label htmlFor="notification">알림 받기</Label>
               </div>
@@ -224,7 +227,7 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
                       type="time"
                       value={formData.notificationTime}
                       onChange={(e) => handleInputChange('notificationTime', e.target.value)}
-                      className="w-32"
+                      className="w-32 bg-white border-gray-200 focus:border-primary focus:ring-primary/20"
                     />
                   </div>
                 </div>
@@ -233,10 +236,18 @@ export function TaskForm({ task, onSubmit, onCancel, isOpen }: TaskFormProps) {
 
             {/* Form Actions */}
             <div className="flex space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel} 
+                className="flex-1 bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:border-gray-400 focus:ring-gray/20"
+              >
                 취소
               </Button>
-              <Button type="submit" className="flex-1">
+              <Button 
+                type="submit" 
+                className="flex-1 bg-primary hover:bg-primary/90 focus:bg-primary/90 focus:ring-primary/30 shadow-sm"
+              >
                 {task ? '수정' : '저장'}
               </Button>
             </div>
